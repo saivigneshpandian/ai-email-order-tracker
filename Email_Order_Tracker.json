@@ -1,0 +1,848 @@
+{
+  "name": "My workflow 20",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -928,
+        -144
+      ],
+      "id": "abb01b51-0d76-4cec-abbf-9f79455eec59",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "use this"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_OR_DOC_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order_ID": "={{ $json.output.Order_ID }}",
+            "Client_Name": "={{ $json.output.Client_Name }}",
+            "Supplier_Name": "={{ $json.output.Supplier_Name }}",
+            "Order_Date": "={{ $json.output.Order_Date }}",
+            "Status (Dropdown)": "={{ $json.output.Status }}",
+            "Delivery_Date": "={{ $json.output.Delivery_Date }}",
+            "Language": "={{ $json.output.Language }}",
+            "Source_Email": "={{ $json.output.Source_Email }}",
+            "Last_Update": "={{ $json.output.Last_Update }}",
+            "Notes": "={{ $json.output.Notes }}"
+          },
+          "matchingColumns": [
+            "Order_ID"
+          ],
+          "schema": [
+            {
+              "id": "Order_ID",
+              "displayName": "Order_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Client_Name",
+              "displayName": "Client_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Supplier_Name",
+              "displayName": "Supplier_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status (Dropdown)",
+              "displayName": "Status (Dropdown)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order_Date",
+              "displayName": "Order_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Delivery_Date",
+              "displayName": "Delivery_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last_Update",
+              "displayName": "Last_Update",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source_Email",
+              "displayName": "Source_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Language",
+              "displayName": "Language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Trello_Card_ID",
+              "displayName": "Trello_Card_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -352,
+        -144
+      ],
+      "id": "cd46beae-2425-4815-8286-be2b91511950",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "use this"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Act as a structured information extractor.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Email Content:\n\n\nName (if the name is not present in mail use this name): {{ $json.from.value[0].name }}\n\nSubject: {{$json.subject}}\n\nFrom: {{ $json.from.value[0].address }}\n\nBody:\n{{$json.text}}\n\nYou will receive an email. Extract the required fields and return ONLY valid JSON.\n\n\nRules:\n\n* Output must be ONLY JSON (no text before or after)\n* Do NOT skip any fields\n* If value is missing, return \"\"\n* All values must be strings\n* Dates must be in YYYY-MM-DD format\n* Status must be one of: New, In Production, Shipped, Delivered, Delayed, Follow-up Needed\n* Detect language: English or French\n* If Last_Update is not found, use today's date in the format\n{{ $now.format('yyyy-MM-dd') }}\n\nJSON format:\n{\n\"Order_ID\": \"string\",\n\"Client_Name\": \"string\",\n\"Supplier_Name\": \"string\",\n\"Status\": \"string\",\n\"Order_Date\": \"YYYY-MM-DD\",\n\"Delivery_Date\": \"YYYY-MM-DD\",\n\"Last_Update\": \"YYYY-MM-DD\",\n\"Source_Email\": \"string\",\n\"Language\": \"string\",\n\"Notes\": \"string\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -720,
+        -144
+      ],
+      "id": "fe3521ec-721a-4692-b6f1-f84ee38da5c1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        80
+      ],
+      "id": "cb850a23-e18d-4774-af9c-e95eca2f8c70",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "use gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Order_ID\": \"string\",\n  \"Client_Name\": \"string\",\n  \"Supplier_Name\": \"string\",\n  \"Status\": \"string\",\n  \"Order_Date\": \"YYYY-MM-DD\",\n  \"Delivery_Date\": \"YYYY-MM-DD\",\n  \"Last_Update\": \"YYYY-MM-DD\",\n  \"Source_Email\": \"string\",\n  \"Language\": \"string\",\n  \"Notes\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -544,
+        64
+      ],
+      "id": "28ba0109-d72a-4116-b494-1d5e1d0edb80",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "listId": "={{ $json.listId }}",
+        "name": "=Order: {{$json.Order_ID}} | {{$json.Client_Name}} | {{$json.Supplier_Name}}",
+        "description": "={{ $json.Notes }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        512,
+        320
+      ],
+      "id": "db6a40e1-2371-485d-8e9b-2a1833d7bebe",
+      "name": "Create a card",
+      "credentials": {
+        "trelloApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d1cdad35-5cd4-4447-b0c1-fee53d43bffa",
+              "leftValue": "={{ $json.Trello_Card_ID }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ec1d6dde-cd14-4fde-842a-776b94d1500a",
+              "leftValue": "={{ $json.Trello_Card_ID }}",
+              "rightValue": "null",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        400
+      ],
+      "id": "a554e5a8-c28a-40d5-8493-22502db0043f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const status = (item.json.Status || item.json[\"Status \"] || \"\")\n    .trim()\n    .toLowerCase();\n\n  let listId = \"\";\n\n  if (status === \"new\") {\n    listId = \"69d0b207bf37b21738ff9677\"; // To Do\n  } else if (status === \"in production\") {\n    listId = \"69d0b207bf37b21738ff9678\"; // Doing\n  } else if (status === \"shipped\" || status === \"delivered\") {\n    listId = \"69d0b207bf37b21738ff9679\"; // Done\n  } else {\n    listId = \"69d0b207bf37b21738ff9677\"; // Default\n  }\n\n  item.json.listId = listId;\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "id": "52e03d83-3201-4527-ac5d-4655430466c8",
+      "name": "Code in JavaScript",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const status = (item.json.Status || item.json[\"Status \"] || \"\")\n    .trim()\n    .toLowerCase();\n\n  let listId = \"\";\n\n  if (status === \"new\") {\n    listId = \"69d0b207bf37b21738ff9677\"; // To Do\n  } else if (status === \"in production\") {\n    listId = \"69d0b207bf37b21738ff9678\"; // Doing\n  } else if (status === \"shipped\" || status === \"delivered\") {\n    listId = \"69d0b207bf37b21738ff9679\"; // Done\n  } else {\n    listId = \"69d0b207bf37b21738ff9677\"; // Default\n  }\n\n  item.json.listId = listId;\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        496
+      ],
+      "id": "923d504f-28b4-4cd0-9aeb-91292c2501c5",
+      "name": "Code in JavaScript1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_OR_DOC_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order_ID": "={{ $('Get row(s) in sheet').item.json.Order_ID }}",
+            "Trello_Card_ID": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "Order_ID"
+          ],
+          "schema": [
+            {
+              "id": "Order_ID",
+              "displayName": "Order_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Client_Name",
+              "displayName": "Client_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Supplier_Name",
+              "displayName": "Supplier_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Order_Date",
+              "displayName": "Order_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Delivery_Date",
+              "displayName": "Delivery_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last_Update",
+              "displayName": "Last_Update",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Source_Email",
+              "displayName": "Source_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Language",
+              "displayName": "Language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Trello_Card_ID",
+              "displayName": "Trello_Card_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        320
+      ],
+      "id": "43483e15-d3c2-4ae9-96bf-0f35623b2cc1",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "use this"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "id": {
+          "__rl": true,
+          "value": "={{ $json.Trello_Card_ID }}",
+          "mode": "id"
+        },
+        "updateFields": {
+          "desc": "={{ $json.Notes }}",
+          "idList": "={{ $json.listId }}",
+          "name": "=Order: {{$json.Order_ID}} | {{$json.Client_Name}} | {{$json.Supplier_Name}}"
+        }
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        416,
+        496
+      ],
+      "id": "d87b78f5-d012-42af-ae1d-602ca71c9f4f",
+      "name": "Update a card",
+      "credentials": {
+        "trelloApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_OR_DOC_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order_ID": "={{ $('Get row(s) in sheet').item.json.Order_ID }}",
+            "Trello_Card_ID": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "Order_ID"
+          ],
+          "schema": [
+            {
+              "id": "Order_ID",
+              "displayName": "Order_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Client_Name",
+              "displayName": "Client_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Supplier_Name",
+              "displayName": "Supplier_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Order_Date",
+              "displayName": "Order_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Delivery_Date",
+              "displayName": "Delivery_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last_Update",
+              "displayName": "Last_Update",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Source_Email",
+              "displayName": "Source_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Language",
+              "displayName": "Language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Trello_Card_ID",
+              "displayName": "Trello_Card_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        512
+      ],
+      "id": "a6c582f1-4c45-4d4c-b3f6-e422b962b752",
+      "name": "Append or update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "use this"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_OR_DOC_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_URL"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        400
+      ],
+      "id": "f5c93364-58c3-490c-890f-95319aa3743e",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "use this"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Create a card": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Update a card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a card": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a6425ed2-997a-45c4-bd4a-a0abb0d72954",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "jawc7tZfhHkwOnrB",
+  "tags": []
+}
