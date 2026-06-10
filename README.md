@@ -27,7 +27,7 @@ Log Trello Card ID back to Sheets
 
 ## Screenshot
 
-![Workflow](screenshot.png)
+![Workflow](Screenshot.png)
 
 ---
 
